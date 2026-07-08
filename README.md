@@ -1,102 +1,89 @@
-# Coil Sync (MCP) — update surface for the Coil trading engine
+# Coil — an agent-native trading system · [coil.trade](https://coil.trade)
 
-[![Coil](https://img.shields.io/badge/Coil-coil.trade-111111)](https://coil.trade/)
-[![MCP](https://img.shields.io/badge/MCP-Coil%20Sync-5A4FCF)](https://coil.trade/llms.txt)
-[![Built for](https://img.shields.io/badge/built%20for-Claude%20%2B%20Robinhood-555555)](https://coil.trade/how-it-works)
-[![Instrument](https://img.shields.io/badge/instrument-SOXL%2FSOXS%20(3x)-orange)](https://coil.trade/)
-[![License key](https://img.shields.io/badge/distribution-paid%20packet-lightgrey)](https://coil.trade/)
-[![Risk](https://img.shields.io/badge/risk-leveraged%20ETFs%20can%20lose%20100%25-critical)](#performance--risk)
+> **Read this first.** This repository is **documentation only**. Coil is **not an MCP server**, and no product code is distributed from GitHub. The "Coil Sync" MCP server this repo originally described was **shelved** and is no longer offered — see [History](#history). The product lives at **[coil.trade](https://coil.trade)**.
 
-> Documentation and the **Coil Sync** MCP surface for **Coil** (**coil.trade**) — a self-operated trading engine for the leveraged semiconductor ETFs **SOXL/SOXS**. This repository is **docs only**. It contains no secrets and none of the paid engine source.
+## What Coil is
 
----
+[Coil](https://coil.trade) (v4) is an agent-native, **long-only** trading system you buy once and run yourself. One purchase is three things: a **scanner** that scores every name across the S&P 500, the Nasdaq-100, and a Macro book (bonds / income / gold & metals / commodities); a **dashboard** that shows the whole board; and an **engine** that trades the scanner's published scores by rule. Its identity is leadership rotation — it hunts the market's relative-strength leaders and buys them when they're coiled at real support: structural stops (4–14%), volume-profile and Fibonacci support/resistance, and an intraday-thrust guard so it doesn't chase the open. It is long-only by design: in downturns it raises cash and rotates defensively into the Macro book, and it never touches inverse ETFs. It runs on your machine, inside your own AI agent, against your own brokerage — your credentials never leave your machine. Full detail: [coil.trade](https://coil.trade).
 
-## What is Coil?
+## What this repository is
 
-**Coil** (**[coil.trade](https://coil.trade/)**) is a rules-based, self-tuning trading **engine** for the leveraged semiconductor ETFs **SOXL/SOXS** that you run yourself. You buy and download a packet, drop it into your own AI agent (built for Claude, runs on a schedule), connect your own brokerage (built for Robinhood; any equivalent broker MCP works), and it operates hands-off on **your** machine with **your** capital — your credentials never leave your machine. Coil is **self-operated software**: it is **not** investment advice, **not** a managed account, **not** a signal service, and **not** a guarantee of profit. Leveraged 3x ETFs can move violently and lose value rapidly, **including total loss** — see [Performance & risk](#performance--risk).
+This is the public docs and pointer repo for Coil ([coil.trade](https://coil.trade)). No product code lives here — Coil is a paid download you run locally. What's here:
 
-## What is this repo?
+- **This README** — a plain-language, current description of what Coil is and is not.
+- **Agent-readable pointers.** If you are an AI agent evaluating this project, the canonical machine-readable sources are on the site:
+  - [`coil.trade/llms.txt`](https://coil.trade/llms.txt) — condensed agent-readable summary
+  - [`coil.trade/llms-full.txt`](https://coil.trade/llms-full.txt) — full agent-readable documentation
+  - [`coil.trade/.well-known/coil.json`](https://coil.trade/.well-known/coil.json) — machine-readable product manifest (what Coil is and how an agent sets it up)
 
-This repo documents **Coil Sync** — the genuine MCP component of the product — and points to Coil's machine-readable surfaces so agents and crawlers can discover and reason about the product accurately.
+Treat **coil.trade** as the source of truth. This repository exists so that old links to it keep resolving to accurate information.
 
-- **Coil Sync** is the MCP server inside the packet. The buyer's agent calls `coil_check_update()` / `coil_self_update(confirm=true)` on its own schedule to pull and apply the latest **cold-validated** engine version (a Pro feature). This is the only MCP component of Coil — the engine itself is not a generic MCP server, and only **Coil Sync** belongs in MCP registries.
-- **Machine-readable pointers:**
-  - `llms.txt` — [https://coil.trade/llms.txt](https://coil.trade/llms.txt)
-  - `.well-known/coil.json` — [https://coil.trade/.well-known/coil.json](https://coil.trade/.well-known/coil.json)
+## How it works
 
-The paid engine source, parameter sets, license logic, and any credentials are **not** in this repository and are not published anywhere public.
+One pipeline, three parts:
 
-## Quickstart (Coil Sync tools)
+1. **Scanner** — scores every name in the S&P 500, the Nasdaq-100, and the Macro book on independent, readable factors: opportunity, entry-window, hold-conviction, leadership, sector-rotation phase, and market posture. It publishes those scores.
+2. **Dashboard** — a local view of the whole board: every score, every position, every rule the engine is following, on your machine.
+3. **Engine** — reads the scanner's *published* scores (it never re-ranks them) and trades by rule: buys leaders coiled at real support, sizes by conviction, exits on a ladder with trailing stops, and holds cash when the pool is thin — all behind a hard safety core. It may use a leveraged ETF (e.g. SOXL) to accelerate a semiconductor leader — long side only, at reduced size — and never uses inverse ETFs.
 
-Coil Sync exposes two tools to the buyer's agent. The agent calls them on its schedule; you don't run them by hand.
+**Where it runs.** Inside your own AI agent: it's built for **Claude Code** (a scheduled Claude Code session is the operator) and is adaptable to other agents that can run code on a schedule. Orders are placed through your **broker's MCP connector** — built for Robinhood, which supports agentic trading through dedicated agentic accounts; any broker with an equivalent MCP works. The scan and the dry-run need no broker connection at all.
 
-```text
-coil_check_update()
-  → Reports whether a newer cold-validated engine version is available,
-    with its version id and the regime-by-regime validation summary.
-    Read-only. Applies nothing.
+**What Coil is not — worth being precise about, given this repo's name:**
 
-coil_self_update(confirm=true)
-  → Pulls and applies the latest validated version (Pro).
-    Requires explicit confirm=true. Verifies integrity before swap-in,
-    with auto-rollback if post-update checks fail.
-```
+- Coil is **not an MCP server**. It exposes no MCP tools. It is Python software your agent runs, and that software *drives* your broker's MCP server to place orders.
+- The former **Coil Sync MCP** — the product this repository was created for — was shelved along with the old Pro tier. It is not part of v4, and nothing here installs an MCP server.
+- It is not a signal service, not a managed account, and not SaaS. Nothing phones home. It ships **disarmed** (`LIVE_TRADING=False`); going live is a separate, deliberately gated flow (your own account allowlisted, an integrity re-pin, the self-test suite green, and a typed total-loss acknowledgment).
 
-**Requirements**
+## Requirements
 
-- macOS
-- Python 3.9+
-- A free **Alpaca** market-data key
-- An MCP-capable AI agent (built for **Claude**)
-- A brokerage with an automation/MCP connector (built for **Robinhood**; any equivalent broker MCP works)
-- A Coil packet — **Download** unlocks the engine and the local improvement loop; **Pro** is what makes `coil_self_update` deliver new centrally-validated versions
-
-## How it fits a Claude + Robinhood setup
-
-1. You buy and download the Coil packet and drop it into your AI agent (built for Claude).
-2. The agent runs on a schedule on **your** machine. It reads market data via your free Alpaca key and places/【manages】 orders through your own broker connector (built for Robinhood). Credentials stay local.
-3. The engine trades **SOXL/SOXS** by its published rules (see below) with its own circuit-breaker ladder and integrity guards.
-4. **Two improvement loops:**
-   - **Local loop** (ships in every copy, Download included): re-fits parameters and capital multipliers to **your own fills** within whitelisted bounds, with auto-rollback. It *cannot* add new structure.
-   - **Centralized R&D** (Pro): discovers genuinely new validated structure, cold-validated across 4 market regimes before it ships, delivered through **Coil Sync** via `coil_self_update`.
-
-The strategy in brief: "compression-to-ignition" leg-rider entries — a sustained 2%+ intraday semis move treated as a short-timeframe reversal inside the 1h trend, gated on tape energy; exits use a 0.8% counter-move soft trail (~2.4% on the 3x ETF) plus a 5% hard stop; the inverse ETF is **never held overnight**. An equity-high-water-mark circuit-breaker ladder governs risk (−6% on the day halts new entries, −10%/−15% cut size, −25% is a hard stop) alongside a 65% single-symbol cap. The packet ships a cold-backtest harness (a fresh process per regime) and 20 integrity guards — the harness once caught its own 3 backtest bugs.
+- **macOS or Windows**, Python 3.9+ (the agent-led onboarding detects your OS and branches the install).
+- **An AI agent that can run code on a schedule** — built for Claude Code; adaptable to equivalents.
+- **A brokerage connector** — built for Robinhood via its MCP; any broker with an equivalent MCP works. Not needed for scanning or dry-run.
+- **A free Alpaca account** for market data (onboarding wires the key for you).
+- Your broker account id and keys stay on your machine — nothing is sent anywhere else.
+- Ships with a self-test suite (100+ assertions) and interactive, agent-led onboarding; about an hour to a scheduled dry-run.
 
 ## Performance & risk
 
-**Read this in full.** All numbers below are **backtested / forward-tested under modeled execution economics — not client or live returns.** Past performance does not predict future results. Treat these as a **hypothesis, not proof**: the validation set is small (~115 trades/year on a single ETF pair, under ~500 trades total).
+The headline claim, stated next to its benchmark, as it always should be:
 
-| Window | Return | Profit factor | Max drawdown |
-|---|---|---|---|
-| Best trailing 250-session window (to 2026-06-13) | **+78.3%** | 3.87 | 6.4% |
-| 2024 (chop) | +11.4% | 1.51 | — |
-| 2023 (quiet bull) | +3.1% | 1.19 | — |
-| 2022 (bear) | **−1.4%** | — | — |
+- **Backtest, 2017–2026 H1: +638% cumulative, vs. +282% for buy-and-hold SPY** over the same window.
+- The backtest is survivorship-free: point-in-time S&P 500 membership including delisted names, next-open fills, and trading costs modeled.
+- **Where the edge lives:** the outperformance concentrates in leadership regimes. Through the end of 2025 the strategy ran roughly *even* with SPY — at about one-third less maximum drawdown. The cumulative gap over SPY was earned in the periods when market leadership was strong and rotating, not spread evenly across the decade.
 
-- The **+78.3%** row is the *single strongest* window. **Do not anchor on it.**
-- **2022 is the honest weak spot.** It is a small loss (−1.4%), improved from −3.6% by a stand-down-to-cash gate on confirmed bear days. We show it on purpose — candor about the loser is the point.
-- **Leverage warning:** SOXL/SOXS are **3x** leveraged ETFs. They can lose value **rapidly, including total loss**. You run Coil with your own capital, on your own machine, at your own risk. Coil is not advice and not a guarantee of profit.
+Caveats — none of these are optional reading:
 
-What you can actually verify for yourself: with the packet you **own** the rules, you can **read** every one of them, and you can **re-run** the cold-backtest harness on your own data. That auditability — and the honesty about the loser — is the difference vs. tools that only show best cases.
+- These are **backtested research figures that validate the ranking model**. They are **not client returns** and not a live track record. The engine is **newly live**.
+- Backtested is not live. Live results will differ; fills, costs, and behavior in regimes the backtest never saw can be worse.
+- Long-only does not mean safe. Markets can lose money, and where the engine uses leveraged ETFs a position can lose value rapidly — up to and including its entire value.
+- Nothing in this repository or on [coil.trade](https://coil.trade) is investment advice. Coil is self-operated software: you decide to run it, and you bear the results.
 
 ## Pricing
 
-**$9.99 one-time Download** (yours to keep and run forever, includes the local improvement loop) · **$25/mo or $249/yr Pro** (auto-delivers each new cold-validated version via Coil Sync). Payments via **Lemon Squeezy** (merchant of record, Stripe-backed).
+**$29, one-time** (launch price; regular $39). No subscription, no tiers, no recurring anything — you own the current version and keep it. Checkout is a hosted **Gumroad** flow; Gumroad is the merchant of record and handles receipts and license keys. All sales are final (instant digital download).
+
+→ [Get Coil — $29 (Gumroad checkout)](https://6634161787305.gumroad.com/l/rtdctu)
 
 ## Links
 
-- Site — [https://coil.trade/](https://coil.trade/)
-- How it works — [https://coil.trade/how-it-works](https://coil.trade/how-it-works)
-- FAQ — [https://coil.trade/faq](https://coil.trade/faq)
-- Comparisons — [https://coil.trade/compare/](https://coil.trade/compare/)
-- `llms.txt` — [https://coil.trade/llms.txt](https://coil.trade/llms.txt)
-- `.well-known/coil.json` — [https://coil.trade/.well-known/coil.json](https://coil.trade/.well-known/coil.json)
-- X — [@coil_trade](https://x.com/coil_trade)
+| | |
+|---|---|
+| Site | [coil.trade](https://coil.trade) |
+| How it works | [coil.trade/how-it-works](https://coil.trade/how-it-works) |
+| FAQ | [coil.trade/faq](https://coil.trade/faq) |
+| Use cases | [coil.trade/use-cases](https://coil.trade/use-cases) |
+| Buy ($29 one-time, Gumroad) | [6634161787305.gumroad.com/l/rtdctu](https://6634161787305.gumroad.com/l/rtdctu) |
+| Agent manifest | [coil.trade/.well-known/coil.json](https://coil.trade/.well-known/coil.json) |
+| llms.txt / llms-full.txt | [coil.trade/llms.txt](https://coil.trade/llms.txt) · [coil.trade/llms-full.txt](https://coil.trade/llms-full.txt) |
+| X | [@coil_trade](https://x.com/coil_trade) — an autonomous agent posting the engine's own trades from its ledger |
+| Terms · Privacy · Refunds | [terms](https://coil.trade/terms) · [privacy](https://coil.trade/privacy) · [refund](https://coil.trade/refund) |
 
-## Topics
+Built by Joey Fife (solo).
 
-`mcp` · `model-context-protocol` · `trading` · `algorithmic-trading` · `soxl` · `soxs` · `leveraged-etf` · `claude` · `robinhood` · `alpaca` · `coil-trade` · `self-hosted`
+## History
+
+This repository previously documented **Coil Sync**, an MCP server that shipped alongside an earlier, retired product: a $9.99 SOXL/SOXS semiconductor pair engine sold through Lemon Squeezy. That product line is dead. **Coil v4** replaced it — long-only, market-wide (S&P 500 / Nasdaq-100 / Macro), sold once at [coil.trade](https://coil.trade) — and the Coil Sync MCP was shelved with the old Pro tier. Rather than delete the repo and break inbound links, it was repurposed as the public docs repo you're reading, so anything that still points here lands on accurate information.
 
 ---
 
-*Coil is self-operated software, not investment advice, not a managed account, not a signal service, and not a guarantee of profit. Leveraged 3x ETFs (SOXL/SOXS) can lose value rapidly, including total loss. Backtested figures are not client returns and do not predict future results. This repository is documentation and the Coil Sync MCP surface only; it contains no secrets and no paid engine source.*
+*Not investment advice. Coil is self-operated software; it is not a managed account, a signal service, or a guarantee of profit. Markets can lose money, and leveraged ETFs can lose value rapidly, including total loss. Backtested results are not live results and are not client returns; the engine is newly live.*
