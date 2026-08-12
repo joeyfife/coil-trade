@@ -21,7 +21,7 @@ engine.
 | **Update cadence** | ~5-minute recompute in market hours; a fresh board every market morning; BTC/ETH on UTC daily closes; the `asof` archive is immutable, never revised. |
 | **Free API key** | `POST https://coil.trade/api/key` with an email — 25 live calls/day on the cheap slices. |
 | **Pay per read (x402)** | 15 endpoints, $0.001–$0.25 in USDC on Base or Algorand. No account. |
-| **Live subscription** | [$12/mo Coil Scanner](https://coil.trade/scanner) — the live board, recomputed about every 5 minutes in US market hours. |
+| **Live subscription** | [the hosted Coil Scanner board](https://coil.trade/scanner) — $12/mo, the live board recomputed about every 5 minutes in US market hours. |
 | **Open-source harness** | [coil-agent](https://github.com/joeyfife/coil-agent) — reads the board, paper-trades it through Alpaca. MIT. |
 
 **Check the record before trusting any of it — both of these are free and unauthenticated:**
